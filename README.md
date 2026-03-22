@@ -4,6 +4,25 @@
 
 Mneme is an open-source, local-first personal memory layer for the AI age. It collects your conversation history across AI platforms, distills it into structured knowledge about you, and makes that knowledge available to any AI — on your terms.
 
+## Name
+
+Mneme (/ˈniːmi/) — from the Greek μνήμη, meaning memory. In Greek mythology, Mneme was one of the original three Muses and the goddess of memory. She is the keeper of what has been experienced, the source from which all knowledge and creativity flows.
+Noosphere names the collective sphere of human thought. Mneme names the individual memory that feeds it. Together they form a complete picture: the personal and the collective, the inward and the outward, the one and the many.
+
+## Vision
+
+The AI revolution is producing a new kind of inequality — not of access to tools, but of accumulated context. People who have been using AI for years have built up thousands of conversations worth of implicit context inside platforms they don't control. When they switch platforms, or when better models arrive, that context doesn't come with them.
+
+Mneme is a bet that data sovereignty matters — that the relationship between a person and their AI tools should not be mediated by which platform happens to hold their history.
+
+In the long run, we believe the right model is:
+- Your context belongs to you, stored locally, portable by default
+- Platforms are service providers, not data custodians
+- You decide which AI gets to know what about you
+- The more you use AI, the richer your context becomes — not locked inside one platform, but carried with you everywhere
+
+This is what Mneme is building toward. The MVP is a CLI tool. The vision is a new layer in the AI stack — the personal memory layer — that sits below platforms and above models, owned entirely by the person it represents.
+
 ## Quick Start
 
 ```bash
@@ -84,6 +103,8 @@ packages/
 ```
 
 All data is stored locally in a single SQLite file at `~/.mneme/mneme.db`.
+
+For the full product vision, architecture, and roadmap, see [mneme-spec.md](./mneme-spec.md).
 
 ## License
 
