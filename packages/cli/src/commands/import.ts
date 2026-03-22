@@ -1,9 +1,9 @@
-import { readFileSync, copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, mkdirSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
 import chalk from 'chalk';
 import ora from 'ora';
 import { MnemeDB, getDefaultDbPath, getExportsDir } from '@mneme/core';
-import { importChatGPT, importClaude } from '@mneme/importers';
+import { importChatGPT, importClaude, readExportFile } from '@mneme/importers';
 
 export async function importCommand(platform: string, file: string): Promise<void> {
   const supported = ['chatgpt', 'claude'];
@@ -18,10 +18,14 @@ export async function importCommand(platform: string, file: string): Promise<voi
 
   let rawData: any;
   try {
-    const content = readFileSync(filePath, 'utf-8');
-    rawData = JSON.parse(content);
-  } catch (err) {
+    const readResult = await readExportFile(filePath, platform);
+    rawData = readResult.data;
+    if (readResult.sourceFile !== basename(filePath)) {
+      spinner.text = `Extracted ${readResult.sourceFile} from ZIP archive...`;
+    }
+  } catch (err: any) {
     spinner.fail(`Failed to read or parse file: ${filePath}`);
+    if (err?.message) console.error(chalk.dim(err.message));
     process.exit(1);
   }
 
@@ -41,7 +45,11 @@ export async function importCommand(platform: string, file: string): Promise<voi
 
     const exportsDir = getExportsDir();
     mkdirSync(exportsDir, { recursive: true });
-    copyFileSync(filePath, resolve(exportsDir, basename(filePath)));
+    try {
+      copyFileSync(filePath, resolve(exportsDir, basename(filePath)));
+    } catch {
+      // non-critical if backup copy fails
+    }
 
     spinner.succeed(chalk.green('Import complete'));
     console.log();

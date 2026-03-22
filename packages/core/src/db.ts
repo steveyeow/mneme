@@ -240,6 +240,28 @@ export class MnemeDB {
     return rows.map(row => this.rowToMemory(row));
   }
 
+  findSimilarMemory(content: string): Memory | undefined {
+    const normalized = content.toLowerCase().trim();
+    const rows = this.db.prepare(
+      "SELECT * FROM memories WHERE archived = 0"
+    ).all() as any[];
+
+    for (const row of rows) {
+      const existing = row.content.toLowerCase().trim();
+      if (existing === normalized) return this.rowToMemory(row);
+      if (this.textSimilarity(existing, normalized) > 0.8) return this.rowToMemory(row);
+    }
+    return undefined;
+  }
+
+  private textSimilarity(a: string, b: string): number {
+    const wordsA = new Set(a.split(/\s+/));
+    const wordsB = new Set(b.split(/\s+/));
+    const intersection = new Set([...wordsA].filter(w => wordsB.has(w)));
+    const union = new Set([...wordsA, ...wordsB]);
+    return union.size === 0 ? 0 : intersection.size / union.size;
+  }
+
   addMemoryManual(content: string, category: Category): Memory {
     const now = new Date().toISOString();
     const memory: Memory = {

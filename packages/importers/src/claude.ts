@@ -16,8 +16,14 @@ interface ClaudeConversation {
 }
 
 function convertMessages(msgs: ClaudeMessage[]): ConversationMessage[] {
+  if (!Array.isArray(msgs)) return [];
   return msgs
-    .filter(m => m.text?.trim())
+    .filter(m => {
+      if (!m || typeof m !== 'object') return false;
+      const sender = m.sender;
+      if (sender !== 'human' && sender !== 'assistant') return false;
+      return typeof m.text === 'string' && m.text.trim().length > 0;
+    })
     .map(m => ({
       role: m.sender === 'human' ? 'user' as const : 'assistant' as const,
       content: m.text,
@@ -35,32 +41,41 @@ export function importClaude(db: MnemeDB, data: ClaudeConversation[]): ImportRes
   let skippedDuplicates = 0;
 
   for (const raw of data) {
-    const messages = convertMessages(raw.chat_messages || []);
-    if (messages.length === 0) {
+    try {
+      if (!raw || typeof raw !== 'object') {
+        skippedDuplicates++;
+        continue;
+      }
+
+      const messages = convertMessages(raw.chat_messages || []);
+      if (messages.length === 0) {
+        skippedDuplicates++;
+        continue;
+      }
+
+      const contentHash = hashContent(messages);
+
+      if (db.hasConversation(contentHash)) {
+        skippedDuplicates++;
+        continue;
+      }
+
+      const conv: Conversation = {
+        id: randomUUID(),
+        platform: 'claude',
+        external_id: raw.uuid || randomUUID(),
+        title: raw.name || 'Untitled',
+        messages,
+        created_at: raw.created_at || new Date().toISOString(),
+        imported_at: new Date().toISOString(),
+        content_hash: contentHash,
+      };
+
+      db.insertConversation(conv);
+      newConversations++;
+    } catch {
       skippedDuplicates++;
-      continue;
     }
-
-    const contentHash = hashContent(messages);
-
-    if (db.hasConversation(contentHash)) {
-      skippedDuplicates++;
-      continue;
-    }
-
-    const conv: Conversation = {
-      id: randomUUID(),
-      platform: 'claude',
-      external_id: raw.uuid,
-      title: raw.name || 'Untitled',
-      messages,
-      created_at: raw.created_at,
-      imported_at: new Date().toISOString(),
-      content_hash: contentHash,
-    };
-
-    db.insertConversation(conv);
-    newConversations++;
   }
 
   return {
